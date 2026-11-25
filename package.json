@@ -1,10 +1,17 @@
 {
   "name": "la-roulotte-api",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "API de click & collect du food truck La Roulotte",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "tsx watch src/server.ts",
+    "start": "tsx src/server.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
   },
   "repository": {
     "type": "git",
@@ -13,7 +20,6 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "module",
   "bugs": {
     "url": "https://github.com/Rouida504/projet-backend/issues"
   },
