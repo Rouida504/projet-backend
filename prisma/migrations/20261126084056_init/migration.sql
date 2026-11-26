@@ -1,0 +1,85 @@
+-- CreateTable
+CREATE TABLE "User" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "email" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "passwordHash" TEXT NOT NULL,
+    "role" TEXT NOT NULL DEFAULT 'CUSTOMER',
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- CreateTable
+CREATE TABLE "Category" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "name" TEXT NOT NULL,
+    "position" INTEGER NOT NULL
+);
+
+-- CreateTable
+CREATE TABLE "Allergen" (
+    "code" TEXT NOT NULL PRIMARY KEY,
+    "label" TEXT NOT NULL
+);
+
+-- CreateTable
+CREATE TABLE "Dish" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "name" TEXT NOT NULL,
+    "description" TEXT NOT NULL,
+    "priceCents" INTEGER NOT NULL,
+    "available" BOOLEAN NOT NULL DEFAULT true,
+    "stock" INTEGER,
+    "imageUrl" TEXT,
+    "categoryId" INTEGER NOT NULL,
+    CONSTRAINT "Dish_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "Category" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "Order" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "status" TEXT NOT NULL DEFAULT 'RECEIVED',
+    "note" TEXT,
+    "totalCents" INTEGER NOT NULL,
+    "paymentStatus" TEXT NOT NULL DEFAULT 'UNPAID',
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
+    "userId" INTEGER NOT NULL,
+    CONSTRAINT "Order_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "OrderItem" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "quantity" INTEGER NOT NULL,
+    "unitPriceCents" INTEGER NOT NULL,
+    "orderId" INTEGER NOT NULL,
+    "dishId" INTEGER NOT NULL,
+    CONSTRAINT "OrderItem_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "Order" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "OrderItem_dishId_fkey" FOREIGN KEY ("dishId") REFERENCES "Dish" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "_DishAllergens" (
+    "A" TEXT NOT NULL,
+    "B" INTEGER NOT NULL,
+    CONSTRAINT "_DishAllergens_A_fkey" FOREIGN KEY ("A") REFERENCES "Allergen" ("code") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "_DishAllergens_B_fkey" FOREIGN KEY ("B") REFERENCES "Dish" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Category_name_key" ON "Category"("name");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Dish_name_key" ON "Dish"("name");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "OrderItem_orderId_dishId_key" ON "OrderItem"("orderId", "dishId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "_DishAllergens_AB_unique" ON "_DishAllergens"("A", "B");
+
+-- CreateIndex
+CREATE INDEX "_DishAllergens_B_index" ON "_DishAllergens"("B");
