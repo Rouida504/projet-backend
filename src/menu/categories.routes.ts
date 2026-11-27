@@ -1,9 +1,10 @@
+// Renvoie les catégories du menu triées par position.
 import { Router } from "express";
 import { prisma } from "../lib/prisma.js";
 
 const router = Router();
 
-// GET /categories (accès public)
+// Charge les catégories de la base dans l'ordre prévu pour l'affichage.
 router.get("/categories", async (req, res) => {
   try {
     const categories = await prisma.category.findMany({

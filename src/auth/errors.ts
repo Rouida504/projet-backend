@@ -2,6 +2,7 @@
 // Erreurs du module, au format du contrat : { error: { code, message, details? } }
 import type { ErrorRequestHandler } from "express";
 
+// Transporte le statut HTTP et le code d'erreur à renvoyer au client.
 export class AuthHttpError extends Error {
   constructor(
     public readonly status: number,
@@ -16,7 +17,9 @@ export class AuthHttpError extends Error {
 
 // À placer AVANT votre propre middleware d'erreurs : traite les erreurs du module
 // et celles du parseur JSON (corps illisible ou trop gros), passe les autres.
+// Formate les erreurs reconnues et transmet les autres au prochain middleware.
 export const authErrorHandler: ErrorRequestHandler = (err, _req, res, next) => {
+  // Construit une réponse d'erreur JSON uniforme.
   const send = (status: number, code: string, message: string, details?: unknown) =>
     res.status(status).json({ error: { code, message, ...(details === undefined ? {} : { details }) } });
 

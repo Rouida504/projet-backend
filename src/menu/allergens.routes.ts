@@ -1,9 +1,10 @@
+// Renvoie les allergènes disponibles, triés par code.
 import { Router } from "express";
 import { prisma } from "../lib/prisma.js";
 
 const router = Router();
 
-// GET /allergens (accès public)
+// Charge les allergènes de la base et les renvoie triés par code.
 router.get("/allergens", async (req, res) => {
   try {
     const allergens = await prisma.allergen.findMany({

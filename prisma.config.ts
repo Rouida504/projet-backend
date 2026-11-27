@@ -1,3 +1,4 @@
+// Configure Prisma, l'emplacement des migrations et le script de seed.
 import "dotenv/config";
 import { defineConfig } from "prisma/config";
 

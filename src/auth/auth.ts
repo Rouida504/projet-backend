@@ -41,6 +41,7 @@ const loginSchema = z.object({
   password: z.string().min(1, "Mot de passe requis"),
 });
 
+// Valide les données reçues et transforme les erreurs Zod en erreur HTTP 400.
 function parse<T>(schema: z.ZodType<T>, body: unknown): T {
   const result = schema.safeParse(body);
   if (!result.success) {
@@ -50,12 +51,14 @@ function parse<T>(schema: z.ZodType<T>, body: unknown): T {
   return result.data;
 }
 
+// Retire les informations privées d'un utilisateur avant de l'envoyer au client.
 const toUserDto = (u: StoredUser) => ({ id: u.id, email: u.email, name: u.name, role: u.role });
 
+// Crée les routes d'authentification et les middlewares de vérification des accès.
 export function createAuth({ users, jwtSecret, jwtExpiresIn = "2h", loginRateLimit = 5 }: AuthOptions) {
   if (!jwtSecret || jwtSecret.length < 16) throw new Error("JWT_SECRET doit faire au moins 16 caractères");
 
-  // Sans jeton valide → 401
+  // Vérifie le jeton Bearer et place l'identité authentifiée dans req.user.
   const requireAuth: RequestHandler = (req, _res, next) => {
     const header = req.headers.authorization ?? "";
     if (!header.startsWith("Bearer ")) throw new AuthHttpError(401, "UNAUTHORIZED", "Authentification requise");
@@ -63,7 +66,7 @@ export function createAuth({ users, jwtSecret, jwtExpiresIn = "2h", loginRateLim
     next();
   };
 
-  // Rôle insuffisant → 403. À placer APRÈS requireAuth.
+  // Fabrique un middleware qui n'autorise que les rôles indiqués.
   const requireRole =
     (...roles: Role[]): RequestHandler =>
     (req, _res, next) => {
@@ -76,15 +79,18 @@ export function createAuth({ users, jwtSecret, jwtExpiresIn = "2h", loginRateLim
     windowMs: 15 * 60 * 1000,
     limit: loginRateLimit,
     skipSuccessfulRequests: true,
+    // Donne un compteur distinct à chaque combinaison d'adresse IP et d'e-mail.
     keyGenerator: (req) => `${ipKeyGenerator(req.ip ?? "")}|${String(req.body?.email ?? "").toLowerCase()}`,
     standardHeaders: "draft-8",
     legacyHeaders: false,
+    // Transforme le dépassement de la limite en erreur HTTP 429 au format de l'API.
     handler: (_req, _res, next) =>
       next(new AuthHttpError(429, "TOO_MANY_REQUESTS", "Trop de tentatives de connexion : réessayez dans 15 minutes")),
   });
 
   const router = Router();
 
+  // Valide les données, crée un compte client et renvoie ses informations publiques.
   router.post("/register", async (req, res) => {
     const { email, name, password } = parse(registerSchema, req.body);
     if (await users.findByEmail(email)) throw new AuthHttpError(409, "CONFLICT", "Cet email est déjà utilisé");
@@ -92,6 +98,7 @@ export function createAuth({ users, jwtSecret, jwtExpiresIn = "2h", loginRateLim
     res.status(201).location(`/users/${user.id}`).json(toUserDto(user));
   });
 
+  // Vérifie les identifiants puis renvoie un jeton JWT et le profil public.
   router.post("/login", loginLimiter, async (req, res) => {
     const { email, password } = parse(loginSchema, req.body);
     const user = await users.findByEmail(email);
@@ -102,6 +109,7 @@ export function createAuth({ users, jwtSecret, jwtExpiresIn = "2h", loginRateLim
     res.json({ token: signToken({ id: user.id, role: user.role }, jwtSecret, jwtExpiresIn), user: toUserDto(user) });
   });
 
+  // Renvoie le profil associé au jeton de l'utilisateur connecté.
   router.get("/me", requireAuth, async (req, res) => {
     const user = await users.findById(currentUser(req).id);
     if (!user) throw new AuthHttpError(401, "UNAUTHORIZED", "Compte introuvable");
@@ -113,7 +121,7 @@ export function createAuth({ users, jwtSecret, jwtExpiresIn = "2h", loginRateLim
 
 export type Auth = ReturnType<typeof createAuth>;
 
-// Dans un controller : l'utilisateur connecté (garanti par requireAuth)
+// Retourne l'identité posée par requireAuth, ou lève une erreur si elle manque.
 export function currentUser(req: Request): AuthUser {
   if (!req.user) throw new AuthHttpError(401, "UNAUTHORIZED", "Authentification requise");
   return req.user;

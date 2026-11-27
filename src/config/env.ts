@@ -1,3 +1,4 @@
+// Charge et valide les paramètres requis avant le démarrage du serveur.
 import "dotenv/config";
 import { z } from "zod";
 

@@ -1,8 +1,10 @@
+// Réinitialise les tables applicatives puis charge les comptes et le menu de démonstration.
 import * as fs from "fs";
 import * as path from "path";
 import { hashPassword } from "../src/auth/index.js";
 import { prisma } from "../src/lib/prisma.js";
 
+// Réinitialise les tables puis charge les comptes, catégories, allergènes et plats de démonstration.
 async function main() {
   console.log("🌱 Début du seed de la base de données...");
 
@@ -77,10 +79,12 @@ async function main() {
 }
 
 main()
+  // Affiche l'erreur du seed et termine le processus avec un code d'échec.
   .catch((e) => {
     console.error(e);
     process.exit(1);
   })
+  // Ferme Prisma même si le chargement du seed échoue.
   .finally(async () => {
     await prisma.$disconnect();
   });

@@ -4,6 +4,7 @@ import cors from "cors";
 import express, { type Express } from "express";
 import helmet from "helmet";
 
+// Installe les protections HTTP, CORS et le parseur JSON avant les routes.
 export function installSecurity(app: Express, { corsOrigin, bodyLimit = "100kb" }: { corsOrigin: string | string[]; bodyLimit?: string }) {
   app.use(helmet()); // en-têtes de sécurité ; retire X-Powered-By
   app.use(cors({ origin: corsOrigin, exposedHeaders: ["Location", "X-Request-Id"] })); // le front, et lui seul
